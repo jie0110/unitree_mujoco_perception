@@ -8,11 +8,14 @@
 #include <unitree/dds_wrapper/robots/g1/g1.h>
 #include <unitree/idl/hg/BmsState_.hpp>
 #include <unitree/idl/hg/IMUState_.hpp>
+#include <unitree/idl/ros2/PointCloud2_.hpp>
 
 #include <iostream>
 
 #include "param.h"
 #include "physics_joystick.h"
+
+#include "ros2_pub.h"
 
 #define MOTOR_SENSOR_NUM 3
 
@@ -57,11 +60,11 @@ public:
             }
             std::cout << std::endl;
         };
-    
+
         printObjects("Link", mj_model_->nbody, mjOBJ_BODY, [](int i) { return i; });
         printObjects("Joint", mj_model_->njnt, mjOBJ_JOINT, [](int i) { return i; });
         printObjects("Actuator", mj_model_->nu, mjOBJ_ACTUATOR, [](int i) { return i; });
-    
+
         int sensorIndex = 0;
         printObjects("Sensor", mj_model_->nsensor, mjOBJ_SENSOR, [&](int i) {
             int currentIndex = sensorIndex;
@@ -88,40 +91,42 @@ protected:
     int secondary_imu_gyro_adr_ = -1;
     int secondary_imu_acc_adr_ = -1;
 
+    int camera_data_adr_ = -1;
+
     std::shared_ptr<unitree::common::UnitreeJoystick> joystick = nullptr;
 
     void _check_sensor()
     {
         num_motor_ = mj_model_->nu;
         dim_motor_sensor_ = MOTOR_SENSOR_NUM * num_motor_;
-    
+
         // Find sensor addresses by name
         int sensor_id = -1;
-        
+
         // IMU quaternion
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "imu_quat");
         if (sensor_id >= 0) {
             imu_quat_adr_ = mj_model_->sensor_adr[sensor_id];
         }
-        
+
         // IMU gyroscope
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "imu_gyro");
         if (sensor_id >= 0) {
             imu_gyro_adr_ = mj_model_->sensor_adr[sensor_id];
         }
-        
+
         // IMU accelerometer
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "imu_acc");
         if (sensor_id >= 0) {
             imu_acc_adr_ = mj_model_->sensor_adr[sensor_id];
         }
-        
+
         // Frame position
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "frame_pos");
         if (sensor_id >= 0) {
             frame_pos_adr_ = mj_model_->sensor_adr[sensor_id];
         }
-        
+
         // Frame velocity
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "frame_vel");
         if (sensor_id >= 0) {
@@ -145,6 +150,13 @@ protected:
         if (sensor_id >= 0) {
             secondary_imu_acc_adr_ = mj_model_->sensor_adr[sensor_id];
         }
+
+        // Camera data
+        sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "camera_dist");
+        if (sensor_id >= 0) {
+            camera_data_adr_ = mj_model_->sensor_adr[sensor_id];
+        }
+
     }
 };
 
@@ -153,6 +165,7 @@ class RobotBridge : public UnitreeSDK2BridgeBase
 {
 using HighState_t = unitree::robot::go2::publisher::SportModeState;
 using WirelessController_t = unitree::robot::go2::publisher::WirelessController;
+using CameraData_t = unitree::robot::g1::publisher::CameraData;
 
 public:
     RobotBridge(mjModel *model, mjData *data) : UnitreeSDK2BridgeBase(model, data)
@@ -161,6 +174,8 @@ public:
         lowstate = std::make_unique<LowState_t>();
         lowstate->joystick = joystick;
         highstate = std::make_unique<HighState_t>();
+        highstate = std::make_unique<HighState_t>();
+        camera_data = std::make_unique<CameraData_t>();
         wireless_controller = std::make_unique<WirelessController_t>();
         wireless_controller->joystick = joystick;
     }
@@ -193,7 +208,7 @@ public:
                 lowstate->msg_.motor_state()[i].dq() = mj_data_->sensordata[i + num_motor_];
                 lowstate->msg_.motor_state()[i].tau_est() = mj_data_->sensordata[i + 2 * num_motor_];
             }
-            
+
             if(imu_quat_adr_ >= 0) {
                 lowstate->msg_.imu_state().quaternion()[0] = mj_data_->sensordata[imu_quat_adr_ + 0];
                 lowstate->msg_.imu_state().quaternion()[1] = mj_data_->sensordata[imu_quat_adr_ + 1];
@@ -209,7 +224,7 @@ public:
                 lowstate->msg_.imu_state().rpy()[1] = asin(2 * (w * y - z * x));
                 lowstate->msg_.imu_state().rpy()[2] = atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
             }
-            
+
             if(imu_gyro_adr_ >= 0) {
                 lowstate->msg_.imu_state().gyroscope()[0] = mj_data_->sensordata[imu_gyro_adr_ + 0];
                 lowstate->msg_.imu_state().gyroscope()[1] = mj_data_->sensordata[imu_gyro_adr_ + 1];
@@ -221,7 +236,7 @@ public:
                 lowstate->msg_.imu_state().accelerometer()[1] = mj_data_->sensordata[imu_acc_adr_ + 1];
                 lowstate->msg_.imu_state().accelerometer()[2] = mj_data_->sensordata[imu_acc_adr_ + 2];
             }
-            
+
             lowstate->msg_.tick() = std::round(mj_data_->time / 1e-3);
             lowstate->unlockAndPublish();
         }
@@ -239,6 +254,26 @@ public:
             }
             highstate->unlockAndPublish();
         }
+
+        // camera
+        if (camera_data->trylock()) {
+            if (camera_data_adr_ >= 0) {
+                int width = 64;
+                int height = 36;
+                int dim = width * height;
+                camera_data->msg_.width() = width;
+                camera_data->msg_.height() = height;
+
+                for (int i = 0; i < dim; ++i) {
+                    double dist = mj_data_->sensordata[camera_data_adr_ + i * 2 + 0];
+                    double depth = mj_data_->sensordata[camera_data_adr_ + i * 2 + 1];
+
+                    camera_data->msg_.data()[i] = depth;
+                }
+            }
+            camera_data->unlockAndPublish();
+        }
+
         // wireless_controller
         if(wireless_controller->joystick) {
             wireless_controller->unlockAndPublish();
@@ -249,7 +284,8 @@ public:
     std::unique_ptr<WirelessController_t> wireless_controller;
     std::shared_ptr<LowCmd_t> lowcmd;
     std::unique_ptr<LowState_t> lowstate;
-    
+    std::unique_ptr<CameraData_t> camera_data;
+
 private:
     unitree::common::RecurrentThreadPtr thread_;
 };
