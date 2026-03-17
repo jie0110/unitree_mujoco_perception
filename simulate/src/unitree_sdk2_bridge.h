@@ -262,11 +262,16 @@ public:
                 int width = 64;
                 int height = 36;
                 int dim = width * height;
+
+                camera_data->msg_.header().frame_id() = std::string("camera");
+                camera_data->msg_.header().stamp().sec() = static_cast<int32_t>(mj_data_->time);
+                camera_data->msg_.header().stamp().nanosec() = static_cast<uint32_t>((mj_data_->time - static_cast<int32_t>(mj_data_->time)) * 1e9);
+
                 camera_data->msg_.width() = width;
                 camera_data->msg_.height() = height;
 
                 camera_data->msg_.data().resize(dim);
-                
+
                 for (int i = 0; i < dim; ++i) {
                     double depth = mj_data_->sensordata[camera_data_adr_ + i];
                     camera_data->msg_.data()[i] = depth;
