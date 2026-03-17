@@ -3,9 +3,9 @@ import numpy as np
 import cv2
 import noise
 
-ROBOT = "go2"
+ROBOT = "g1"
 INPUT_SCENE_PATH = "./scene.xml"
-OUTPUT_SCENE_PATH = "../unitree_robots/" + ROBOT + "/scene_terrain.xml"
+OUTPUT_SCENE_PATH = "../unitree_robots/" + ROBOT + "/scene_29dof_terrain_with_camera.xml"
 
 
 # zyx euler angle to quaternion
@@ -86,7 +86,7 @@ class TerrainGenerator:
     # Add Box to scene
     def AddBox(self,
                position=[1.0, 0.0, 0.0],
-               euler=[0.0, 0.0, 0.0], 
+               euler=[0.0, 0.0, 0.0],
                size=[0.1, 0.1, 0.1]):
         geo = xml_et.SubElement(self.worldbody, "geom")
         geo.attrib["pos"] = list_to_str(position)
@@ -95,12 +95,12 @@ class TerrainGenerator:
             0.5 * np.array(size))  # half size of box for mujoco
         quat = euler_to_quat(euler[0], euler[1], euler[2])
         geo.attrib["quat"] = list_to_str(quat)
-    
+
     def AddGeometry(self,
                position=[1.0, 0.0, 0.0],
-               euler=[0.0, 0.0, 0.0], 
+               euler=[0.0, 0.0, 0.0],
                size=[0.1, 0.1],geo_type="box"):
-        
+
         # geo_type supports "plane", "sphere", "capsule", "ellipsoid", "cylinder", "box"
         geo = xml_et.SubElement(self.worldbody, "geom")
         geo.attrib["pos"] = list_to_str(position)
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     # Box obstacle
     tg.AddBox(position=[1.5, 0.0, 0.1], euler=[0, 0, 0.0], size=[1, 1.5, 0.2])
-    
+
     # Geometry obstacle
     # geo_type supports "plane", "sphere", "capsule", "ellipsoid", "cylinder", "box"
     tg.AddGeometry(position=[1.5, 0.0, 0.25], euler=[0, 0, 0.0], size=[1.0,0.5,0.5],geo_type="cylinder")
@@ -293,5 +293,41 @@ if __name__ == "__main__":
                               input_img="./unitree_robot.jpeg",
                               image_scale=[1.0, 1.0],
                               output_hfield_image="unitree_hfield.png")
+
+    # Combined terrain: stairs -> flat plane -> slope
+    # Stairs
+    stair_init_pos = [1.0, 8.0, 0.0]
+    stair_width = 0.2
+    stair_height = 0.15
+    stair_nums = 5
+    stair_length = 1.5
+    tg.AddStairs(init_pos=stair_init_pos, yaw=0.0,
+                 width=stair_width, height=stair_height,
+                 length=stair_length, stair_nums=stair_nums)
+
+    # Calculate position after stairs
+    stairs_total_length = stair_nums * stair_width
+    flat_plane_pos = [stair_init_pos[0] + stairs_total_length + 0.5, stair_init_pos[1], stair_height * stair_nums]
+
+    # Flat plane (thin box)
+    flat_plane_length = 2.0
+    flat_plane_pos[0] = flat_plane_pos[0] + flat_plane_length / 2
+    tg.AddBox(position=flat_plane_pos,
+              euler=[0, 0, 0.0],
+              size=[flat_plane_length, stair_length, 0.05])
+
+    # Calculate position after flat plane
+    slope_pos = [flat_plane_pos[0] + flat_plane_length / 2 + 0.5, flat_plane_pos[1], (stair_height * stair_nums) / 2]
+
+    # Slope (angled box)
+    slope_length = 1.25
+    slope_height = 0.5
+    slope_angle = 0.5  # radians, negative for downward slope
+    tg.AddBox(position=[slope_pos[0],
+                        slope_pos[1],
+                        slope_pos[2]
+                        ],
+              euler=[0.0, slope_angle, 0.0],
+              size=[slope_length, stair_length, 0.1])
 
     tg.Save()
