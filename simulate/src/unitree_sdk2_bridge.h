@@ -11,6 +11,7 @@
 #include <unitree/idl/ros2/PointCloud2_.hpp>
 
 #include <iostream>
+#include <stdlib.h>
 
 #include "param.h"
 #include "physics_joystick.h"
@@ -152,7 +153,7 @@ protected:
         }
 
         // Camera data
-        sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "camera_dist");
+        sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "camera_data");
         if (sensor_id >= 0) {
             camera_data_adr_ = mj_model_->sensor_adr[sensor_id];
         }
@@ -264,10 +265,10 @@ public:
                 camera_data->msg_.width() = width;
                 camera_data->msg_.height() = height;
 
+                camera_data->msg_.data().resize(dim);
+                
                 for (int i = 0; i < dim; ++i) {
-                    double dist = mj_data_->sensordata[camera_data_adr_ + i * 2 + 0];
-                    double depth = mj_data_->sensordata[camera_data_adr_ + i * 2 + 1];
-
+                    double depth = mj_data_->sensordata[camera_data_adr_ + i];
                     camera_data->msg_.data()[i] = depth;
                 }
             }
