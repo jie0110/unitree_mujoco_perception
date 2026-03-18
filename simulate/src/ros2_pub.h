@@ -24,12 +24,13 @@ namespace publisher
 class CameraData
 {
 public:
-    CameraData(std::string topic1 = "rt/cameradata", std::string topic2 = "rt/camera/points")
+    CameraData(std::string topic1 = "rt/camera/depth", std::string topic2 = "rt/camera/points")
         : camera_pub_(std::make_unique<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>>(topic1)), pointcloud_pub_(std::make_unique<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>>(topic2)) {
 
     }
 
-    void publish(const double* sensordata, int offset, int32_t time_sec, int32_t time_nanosec) {
+    void publishDepth(const double* sensordata, int offset, int32_t time_sec, int32_t time_nanosec) {
+
         if (camera_pub_->trylock()) {
             camera_pub_->msg_.header().frame_id() = std::string("camera");
             camera_pub_->msg_.header().stamp().sec() = time_sec;
@@ -49,6 +50,9 @@ public:
             camera_pub_->unlockAndPublish();
         }
 
+    }
+
+    void publishPointCloud(const double* sensordata, int offset, int32_t time_sec, int32_t time_nanosec) {
         if (pointcloud_pub_->trylock()) {
             // Calculate focal length
             float vfov_rad = vfov_deg * M_PI / 180.0f;
@@ -71,8 +75,10 @@ public:
                 return;
             }
 
+            points_buffer_.clear();
+
             // Allocate memory for points
-            std::vector<float> points(valid_count * 3);
+            // std::vector<float> points(valid_count * 3);
             int point_idx = 0;
 
             // Second pass: compute 3D points for valid depth values
@@ -102,9 +108,9 @@ public:
                     float final_z = -rotated_y;
 
                     // Store the point
-                    points[point_idx * 3] = final_x;
-                    points[point_idx * 3 + 1] = final_y;
-                    points[point_idx * 3 + 2] = final_z;
+                    points_buffer_.push_back(final_x);
+                    points_buffer_.push_back(final_y);
+                    points_buffer_.push_back(final_z);
                     ++point_idx;
                 }
             }
@@ -137,13 +143,10 @@ public:
             pointcloud_pub_->msg_.row_step() = pointcloud_pub_->msg_.point_step() * pointcloud_pub_->msg_.width();
             pointcloud_pub_->msg_.is_dense() = true;
 
-            std::vector<uint8_t> data(points.size() * sizeof(float));
+            std::vector<uint8_t> data(points_buffer_.size() * sizeof(float));
 
-            std::memcpy(data.data(), points.data(), points.size() * sizeof(float));
-
-            // pointcloud_pub_->msg_.data().resize(points.size() * sizeof(float));
-            // std::memcpy(pointcloud_pub_->msg_.data().data(), points.data(), points.size() * sizeof(float));
-
+            std::memcpy(data.data(), points_buffer_.data(), points_buffer_.size() * sizeof(float));
+            
             pointcloud_pub_->msg_.data().swap(data);
 
             pointcloud_pub_->unlockAndPublish();
@@ -159,6 +162,7 @@ private:
     int height = 36;
     float vfov_deg = 58.0f;
 
+    std::vector<float> points_buffer_;
 };
 
 };

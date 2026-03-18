@@ -288,7 +288,8 @@ public:
             int32_t time_sec = static_cast<int32_t>(mj_data_->time);
             int32_t time_nanosec = static_cast<uint32_t>((mj_data_->time - static_cast<int32_t>(mj_data_->time)) * 1e9);
 
-            camera_data->publish(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
+            camera_data->publishDepth(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
+            camera_data->publishPointCloud(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
         }
 
 
