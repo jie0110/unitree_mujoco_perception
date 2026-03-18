@@ -1,9 +1,16 @@
 #pragma once
 
+#include <vector>
+#include <cstdint>
+#include <cmath>
+#include <string>
+#include <algorithm>
+
 #include <eigen3/Eigen/Dense>
 #include <unitree/dds_wrapper/common/Publisher.h>
 
 #include <unitree/idl/ros2/PointCloud2_.hpp>
+#include <unitree/idl/ros2/PointField_.hpp>
 
 namespace unitree
 {
@@ -14,14 +21,146 @@ namespace g1
 namespace publisher
 {
 
-class CameraData : public RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>
+class CameraData
 {
 public:
-    CameraData(std::string topic = "rt/cameradata") : RealTimePublisher<MsgType>(topic)
-    {
+    CameraData(std::string topic1 = "rt/cameradata", std::string topic2 = "rt/camera/points")
+        : camera_pub_(std::make_unique<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>>(topic1)), pointcloud_pub_(std::make_unique<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>>(topic2)) {
+
     }
 
-  };
+    void publish(const double* sensordata, int offset, int32_t time_sec, int32_t time_nanosec) {
+        if (camera_pub_->trylock()) {
+            camera_pub_->msg_.header().frame_id() = std::string("camera");
+            camera_pub_->msg_.header().stamp().sec() = time_sec;
+            camera_pub_->msg_.header().stamp().nanosec() = time_nanosec;
+
+            int dim = height * width;
+
+            camera_pub_->msg_.height() = 1;
+            camera_pub_->msg_.width() = dim;
+
+            camera_pub_->msg_.data().resize(dim);
+
+            for (int i = 0; i < dim; ++i) {
+                camera_pub_->msg_.data()[i] = sensordata[offset + i];
+            }
+
+            camera_pub_->unlockAndPublish();
+        }
+
+        if (pointcloud_pub_->trylock()) {
+            // Calculate focal length
+            float vfov_rad = vfov_deg * M_PI / 180.0f;
+            float f = (height / 2.0f) / std::tan(vfov_rad / 2.0f);  // focal length in pixels
+
+            // Principal point (assuming square pixels, fx = fy = f)
+            float cx = width / 2.0f;
+            float cy = height / 2.0f;
+
+            // First pass: count valid points (depth > 0)
+            int valid_count = 0;
+            for (int i = 0; i < height * width; ++i) {
+                if (sensordata[offset + i] > 0.0f) {
+                    ++valid_count;
+                }
+            }
+
+            if (valid_count == 0) {
+                pointcloud_pub_->unlockAndPublish();
+                return;
+            }
+
+            // Allocate memory for points
+            std::vector<float> points(valid_count * 3);
+            int point_idx = 0;
+
+            // Second pass: compute 3D points for valid depth values
+            for (int v = 0; v < height; ++v) {
+                for (int u = 0; u < width; ++u) {
+                    int idx = v * width + u;
+                    float d = sensordata[offset + idx];
+
+                    if (d <= 0.0f) {
+                        continue;  // Skip invalid points
+                    }
+
+                    // Convert to 3D coordinates
+                    float x = (u - cx) * d / f;
+                    float y = (v - cy) * d / f;
+                    float z = d;
+
+                    // Apply 90-degree rotation around +Y axis: new_x = z, new_y = y, new_z = -x
+                    float rotated_x = z;
+                    float rotated_y = y;
+                    float rotated_z = -x;
+
+                    // Apply additional -90 degree rotation around +X axis:
+                    // final_x = rotated_x, final_y = rotated_z, final_z = -rotated_y
+                    float final_x = rotated_x;
+                    float final_y = rotated_z;
+                    float final_z = -rotated_y;
+
+                    // Store the point
+                    points[point_idx * 3] = final_x;
+                    points[point_idx * 3 + 1] = final_y;
+                    points[point_idx * 3 + 2] = final_z;
+                    ++point_idx;
+                }
+            }
+
+            pointcloud_pub_->msg_.header().frame_id() = std::string("camera");
+            pointcloud_pub_->msg_.header().stamp().sec() = time_sec;
+            pointcloud_pub_->msg_.header().stamp().nanosec() = time_nanosec;
+
+            pointcloud_pub_->msg_.height() = 1;
+            pointcloud_pub_->msg_.width() = valid_count;
+
+            pointcloud_pub_->msg_.fields().resize(3);
+            pointcloud_pub_->msg_.fields()[0].name() = "x";
+            pointcloud_pub_->msg_.fields()[0].offset() = 0;
+            pointcloud_pub_->msg_.fields()[0].datatype() = sensor_msgs::msg::dds_::PointField_Constants::FLOAT32_;
+            pointcloud_pub_->msg_.fields()[0].count() = 1;
+
+            pointcloud_pub_->msg_.fields()[1].name() = "y";
+            pointcloud_pub_->msg_.fields()[1].offset() = 4;
+            pointcloud_pub_->msg_.fields()[1].datatype() = sensor_msgs::msg::dds_::PointField_Constants::FLOAT32_;
+            pointcloud_pub_->msg_.fields()[1].count() = 1;
+
+            pointcloud_pub_->msg_.fields()[2].name() = "z";
+            pointcloud_pub_->msg_.fields()[2].offset() = 8;
+            pointcloud_pub_->msg_.fields()[2].datatype() = sensor_msgs::msg::dds_::PointField_Constants::FLOAT32_;
+            pointcloud_pub_->msg_.fields()[2].count() = 1;
+
+            pointcloud_pub_->msg_.is_bigendian() = false;
+            pointcloud_pub_->msg_.point_step() = 3 * sizeof(float);  // 3 floats * 4 bytes
+            pointcloud_pub_->msg_.row_step() = pointcloud_pub_->msg_.point_step() * pointcloud_pub_->msg_.width();
+            pointcloud_pub_->msg_.is_dense() = true;
+
+            std::vector<uint8_t> data(points.size() * sizeof(float));
+
+            std::memcpy(data.data(), points.data(), points.size() * sizeof(float));
+
+            // pointcloud_pub_->msg_.data().resize(points.size() * sizeof(float));
+            // std::memcpy(pointcloud_pub_->msg_.data().data(), points.data(), points.size() * sizeof(float));
+
+            pointcloud_pub_->msg_.data().swap(data);
+
+            pointcloud_pub_->unlockAndPublish();
+        }
+
+
+    }
+private:
+    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> camera_pub_;
+    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> pointcloud_pub_;
+
+    int width = 64;
+    int height = 36;
+    float vfov_deg = 58.0f;
+
+};
+
 };
 };
 };
