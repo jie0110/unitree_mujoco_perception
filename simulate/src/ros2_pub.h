@@ -96,16 +96,13 @@ public:
                     float y = (v - cy) * d / f;
                     float z = d;
 
-                    // Apply 90-degree rotation around +Y axis: new_x = z, new_y = y, new_z = -x
-                    float rotated_x = z;
-                    float rotated_y = y;
-                    float rotated_z = -x;
-
-                    // Apply additional -90 degree rotation around +X axis:
-                    // final_x = rotated_x, final_y = rotated_z, final_z = -rotated_y
-                    float final_x = rotated_x;
-                    float final_y = rotated_z;
-                    float final_z = -rotated_y;
+                    // Apply -135 degree rotation around +Y 
+                    double rad = -135 * M_PI / 180.0;
+                    double cosA = cos(rad);
+                    double sinA = sin(rad);
+                    float final_x = x * cosA + z * sinA;
+                    float final_y = y;
+                    float final_z = -x * sinA + z * cosA;
 
                     // Store the point
                     points_buffer_.push_back(final_x);
