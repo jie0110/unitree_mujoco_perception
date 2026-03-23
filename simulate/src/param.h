@@ -26,6 +26,8 @@ inline struct SimulationConfig
     int enable_elastic_band;
     int band_attached_link = 0;
 
+    std::string camera_name;
+
     void load_from_yaml(const std::string &filename)
     {
         auto cfg = YAML::LoadFile(filename);
@@ -41,6 +43,7 @@ inline struct SimulationConfig
             joystick_bits = cfg["joystick_bits"].as<int>();
             print_scene_information = cfg["print_scene_information"].as<int>();
             enable_elastic_band = cfg["enable_elastic_band"].as<int>();
+            camera_name = cfg["camera_name"].as<std::string>();
         }
         catch(const std::exception& e)
         {

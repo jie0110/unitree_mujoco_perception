@@ -167,13 +167,15 @@ public:
 
 
     }
-private:
-    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> camera_pub_;
-    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> pointcloud_pub_;
 
+public:
     int width = 64;
     int height = 36;
     float vfov_deg = 58.0f;
+
+private:
+    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> camera_pub_;
+    std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> pointcloud_pub_;
 
     std::vector<float> depth_buffer_;
     std::vector<float> points_buffer_;

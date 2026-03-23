@@ -14,3 +14,5 @@ joystick_bits: 16 # Some game controllers may only have 8-bit accuracy
 print_scene_information: 1 # Print link, joint and sensors information of robot
 
 enable_elastic_band: 1 # Virtual spring band, used for lifting h1
+
+camera_name: "depth_cam"

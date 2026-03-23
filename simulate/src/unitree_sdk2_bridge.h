@@ -72,6 +72,18 @@ public:
             sensorIndex += mj_model_->sensor_dim[i];
             return currentIndex;
         });
+
+        // camera
+        std::cout << "<<------------- Camera ------------->> " << std::endl;
+        for (int i = 0; i < mj_model_->ncam; i++) {
+            const char* name = mj_id2name(mj_model_, mjOBJ_CAMERA, i);
+            if (name) {
+                std::cout << "Camera_index: " << i << ", " << "name: " << name << std::endl;
+                printf("resulution(width, height): [%d, %d]\n", mj_model_->cam_resolution[i * 2 + 0], mj_model_->cam_resolution[ i * 2 + 1]);
+                // fovy
+                printf("fovy: %f\n", mj_model_->cam_fovy[i]);
+            }
+        }
     }
 
 protected:
@@ -177,6 +189,18 @@ public:
         highstate = std::make_unique<HighState_t>();
         highstate = std::make_unique<HighState_t>();
         camera_data = std::make_unique<CameraData_t>();
+
+        for (int i = 0; i < mj_model_->ncam; i++) {
+            const char* name = mj_id2name(mj_model_, mjOBJ_CAMERA, i);
+            if (name == param::config.camera_name) {
+                camera_data->width = mj_model_->cam_resolution[i * 2 + 0];
+                camera_data->height = mj_model_->cam_resolution[i * 2 + 1];
+                camera_data->vfov_deg = mj_model_->cam_fovy[i];
+                printf("Camera found: %s, resolution: [%d, %d], fovy: %f\n", name, camera_data->width, camera_data->height, camera_data->vfov_deg);
+                break;
+            }
+        }
+
         wireless_controller = std::make_unique<WirelessController_t>();
         wireless_controller->joystick = joystick;
     }
