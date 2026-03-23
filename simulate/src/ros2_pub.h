@@ -41,11 +41,27 @@ public:
             camera_pub_->msg_.height() = 1;
             camera_pub_->msg_.width() = dim;
 
-            camera_pub_->msg_.data().resize(dim);
+            camera_pub_->msg_.fields().resize(1);
+            camera_pub_->msg_.fields()[0].name() = "depth";
+            camera_pub_->msg_.fields()[0].offset() = 0;
+            camera_pub_->msg_.fields()[0].datatype() = sensor_msgs::msg::dds_::PointField_Constants::FLOAT32_;
+            camera_pub_->msg_.fields()[0].count() = 1;
+            camera_pub_->msg_.is_bigendian() = false;
+            camera_pub_->msg_.point_step() = 1 * sizeof(float);  // 1 floats * 4 bytes
+            camera_pub_->msg_.row_step() = camera_pub_->msg_.point_step() * dim;
+            camera_pub_->msg_.is_dense() = true;
+
+            depth_buffer_.resize(dim);
 
             for (int i = 0; i < dim; ++i) {
-                camera_pub_->msg_.data()[i] = sensordata[offset + i];
+                depth_buffer_[i] = static_cast<float>(sensordata[offset + i]);
             }
+
+            std::vector<uint8_t> data(depth_buffer_.size() * sizeof(float));
+
+            std::memcpy(data.data(), depth_buffer_.data(), depth_buffer_.size() * sizeof(float));
+
+            camera_pub_->msg_.data().swap(data);
 
             camera_pub_->unlockAndPublish();
         }
@@ -96,7 +112,7 @@ public:
                     float y = (v - cy) * d / f;
                     float z = d;
 
-                    // Apply -135 degree rotation around +Y 
+                    // Apply -135 degree rotation around +Y
                     double rad = -135 * M_PI / 180.0;
                     double cosA = cos(rad);
                     double sinA = sin(rad);
@@ -143,7 +159,7 @@ public:
             std::vector<uint8_t> data(points_buffer_.size() * sizeof(float));
 
             std::memcpy(data.data(), points_buffer_.data(), points_buffer_.size() * sizeof(float));
-            
+
             pointcloud_pub_->msg_.data().swap(data);
 
             pointcloud_pub_->unlockAndPublish();
@@ -159,6 +175,7 @@ private:
     int height = 36;
     float vfov_deg = 58.0f;
 
+    std::vector<float> depth_buffer_;
     std::vector<float> points_buffer_;
 };
 
