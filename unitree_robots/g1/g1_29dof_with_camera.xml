@@ -231,7 +231,7 @@
                  fovy="58"
                  64 36
             -->
-            <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.8307767239493009 0" resolution="64 36" fovy="58" output="depth"/>
+            <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.8307767239493009 0" resolution="36 64" fovy="58" output="depth"/>
             <!-- <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.8307767239493009 0" mode="fixed" resolution="480 270" output="depth" projection="perspective" sensorsize="0.00144 0.00081" focalpixel="243.72 243.72" principalpixel="-0.42 2.00"/> -->
             <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.23778"
               quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
@@ -529,7 +529,7 @@
     <gyro name="secondary_imu_gyro" site="secondary_imu" noise="5e-4" cutoff="34.9"/>
     <accelerometer name="secondary_imu_acc" site="secondary_imu" noise="1e-2" cutoff="157"/>
 
-    <rangefinder name="camera_data" camera="depth_cam" data="depth"/>
+    <rangefinder name="camera_data" camera="depth_cam" data="depth" cutoff="10" nsample="100" interval="0.03333 0"/>
   </sensor>
 
 </mujoco>
