@@ -209,6 +209,21 @@ public:
     {
         thread_ = std::make_shared<unitree::common::RecurrentThread>(
             "unitree_bridge", UT_CPU_ID_NONE, 1000, [this]() { this->run(); });
+        thread_image_ = std::make_shared<unitree::common::RecurrentThread>(
+            "unitree_bridge_image", UT_CPU_ID_NONE, 60, [this]() { this->image_run(); });
+    }
+
+    virtual void image_run()
+    {
+        if (camera_data_adr_ >= 0) {
+
+            int32_t time_sec = static_cast<int32_t>(mj_data_->time);
+            int32_t time_nanosec = static_cast<uint32_t>((mj_data_->time - static_cast<int32_t>(mj_data_->time)) * 1e9);
+
+            camera_data->publishDepth(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
+            camera_data->publishPointCloud(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
+        }
+
     }
 
     virtual void run()
@@ -280,16 +295,6 @@ public:
             highstate->unlockAndPublish();
         }
         
-        if (camera_data_adr_ >= 0) {
-
-            int32_t time_sec = static_cast<int32_t>(mj_data_->time);
-            int32_t time_nanosec = static_cast<uint32_t>((mj_data_->time - static_cast<int32_t>(mj_data_->time)) * 1e9);
-
-            camera_data->publishDepth(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
-            camera_data->publishPointCloud(mj_data_->sensordata, camera_data_adr_, time_sec, time_nanosec);
-        }
-
-
         // wireless_controller
         if(wireless_controller->joystick) {
             wireless_controller->unlockAndPublish();
@@ -304,6 +309,8 @@ public:
 
 private:
     unitree::common::RecurrentThreadPtr thread_;
+    unitree::common::RecurrentThreadPtr thread_image_;
+
 };
 
 using Go2Bridge = RobotBridge<unitree::robot::go2::subscription::LowCmd, unitree::robot::go2::publisher::LowState>;

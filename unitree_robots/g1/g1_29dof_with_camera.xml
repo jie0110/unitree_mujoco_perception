@@ -529,7 +529,7 @@
     <gyro name="secondary_imu_gyro" site="secondary_imu" noise="5e-4" cutoff="34.9"/>
     <accelerometer name="secondary_imu_acc" site="secondary_imu" noise="1e-2" cutoff="157"/>
 
-    <rangefinder name="camera_data" camera="depth_cam" data="depth" cutoff="10" nsample="100" interval="0.03333 0"/>
+    <rangefinder name="camera_data" camera="depth_cam" data="depth" cutoff="10" nsample="100" interval="0.01666 0"/>
   </sensor>
 
 </mujoco>
