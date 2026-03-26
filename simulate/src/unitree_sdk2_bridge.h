@@ -207,10 +207,10 @@ public:
 
     void start()
     {
-        thread_ = std::make_shared<unitree::common::RecurrentThread>(
-            "unitree_bridge", UT_CPU_ID_NONE, 1000, [this]() { this->run(); });
-        thread_image_ = std::make_shared<unitree::common::RecurrentThread>(
-            "unitree_bridge_image", UT_CPU_ID_NONE, 60, [this]() { this->image_run(); });
+        thread_ = std::make_shared<unitree::common::RecurrentThread>("unitree_bridge", UT_CPU_ID_NONE, 1000, [this]() { this->run(); });
+        // 60hz
+        float interval_us = float((1.0 / 60.0) * 1000 * 1000);
+        thread_image_ = std::make_shared<unitree::common::RecurrentThread>("unitree_bridge_image", UT_CPU_ID_NONE, interval_us, [this]() { this->image_run(); });
     }
 
     virtual void image_run()
