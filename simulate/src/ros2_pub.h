@@ -54,7 +54,11 @@ public:
             depth_buffer_.resize(dim);
 
             for (int i = 0; i < dim; ++i) {
-                depth_buffer_[i] = static_cast<float>(sensordata[offset + i]);
+                float data = static_cast<float>(sensordata[offset + i]);
+                if (data == -1) {
+                    data = camera_cutoff;
+                }
+                depth_buffer_[i] = data;
             }
 
             std::vector<uint8_t> data(depth_buffer_.size() * sizeof(float));
@@ -172,6 +176,7 @@ public:
     int width = 64;
     int height = 36;
     float vfov_deg = 58.0f;
+    float camera_cutoff = 10.0f;
 
 private:
     std::unique_ptr<RealTimePublisher<sensor_msgs::msg::dds_::PointCloud2_>> camera_pub_;

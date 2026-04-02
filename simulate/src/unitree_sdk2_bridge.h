@@ -105,6 +105,7 @@ protected:
     int secondary_imu_acc_adr_ = -1;
 
     int camera_data_adr_ = -1;
+    int camera_data_id = -1;
 
     std::shared_ptr<unitree::common::UnitreeJoystick> joystick = nullptr;
 
@@ -168,6 +169,7 @@ protected:
         sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, "camera_data");
         if (sensor_id >= 0) {
             camera_data_adr_ = mj_model_->sensor_adr[sensor_id];
+            camera_data_id = sensor_id;
         }
 
     }
@@ -196,7 +198,8 @@ public:
                 camera_data->width = mj_model_->cam_resolution[i * 2 + 0];
                 camera_data->height = mj_model_->cam_resolution[i * 2 + 1];
                 camera_data->vfov_deg = mj_model_->cam_fovy[i];
-                printf("Camera found: %s, resolution: [%d, %d], fovy: %f\n", name, camera_data->width, camera_data->height, camera_data->vfov_deg);
+                camera_data->camera_cutoff = mj_model_->sensor_cutoff[camera_data_id];
+                printf("Camera found: %s, resolution: [%d, %d], fovy: %f, cutoff: %f\n", name, camera_data->width, camera_data->height, camera_data->vfov_deg, camera_data->camera_cutoff);
                 break;
             }
         }
