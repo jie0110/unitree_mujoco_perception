@@ -237,8 +237,7 @@
                  fovy="58"
                  64 36
             -->
-            <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.8307767239493009 0" resolution="36 64" fovy="58" output="depth"/>
-            <!-- <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.8307767239493009 0" mode="fixed" resolution="480 270" output="depth" projection="perspective" sensorsize="0.00144 0.00081" focalpixel="243.72 243.72" principalpixel="-0.42 2.00"/> -->
+            <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.707767239493009 -1.57079" sensorsize="0.019830 0.011152" focalpixel="32.2748 32.2799" principalpixel="32.0000 18.0000" resolution="64 36" mode="fixed" />
             <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.23778"
               quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
               <inertial pos="0 0.035892 -0.011628" quat="0.654152 0.0130458 -0.326267 0.68225"
