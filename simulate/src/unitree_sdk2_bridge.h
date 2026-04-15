@@ -80,6 +80,8 @@ public:
             if (name) {
                 std::cout << "Camera_index: " << i << ", " << "name: " << name << std::endl;
                 printf("resulution(width, height): [%d, %d]\n", mj_model_->cam_resolution[i * 2 + 0], mj_model_->cam_resolution[ i * 2 + 1]);
+                printf("cam_intrinsic: [%lf, %lf, %lf, %lf]\n", mj_model_->cam_intrinsic[i * 4 + 0], mj_model_->cam_intrinsic[i * 4 + 1], mj_model_->cam_intrinsic[i * 4 + 2], mj_model_->cam_intrinsic[i * 4 + 3]);
+                printf("cam_sensorsize: [%lf, %lf]\n", mj_model_->cam_sensorsize[i * 2 + 0], mj_model_->cam_sensorsize[i * 2 + 1]);
                 // fovy
                 printf("fovy: %f\n", mj_model_->cam_fovy[i]);
             }
