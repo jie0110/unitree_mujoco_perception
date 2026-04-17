@@ -3,19 +3,19 @@
 
   <default>
     <default class="torso_motor">
-      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
+      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
     </default>
     <default class="leg_motor">
-      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
+      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
     </default>
     <default class="ankle_motor">
-      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
+      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
     </default>
     <default class="arm_motor">
-      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
+      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
     </default>
     <default class="wrist_motor">
-      <joint damping="0.05" armature="0.01" frictionloss="0.1"/>
+      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
     </default>
 
   </default>
@@ -211,8 +211,8 @@
             actuatorfrcrange="-50 50" class="torso_motor"/>
           <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.7 0.7 0.7 1"
             mesh="waist_roll_link" />
-          <site name="secondary_imu" size="0.01" pos="-0.03959 -0.00224 0.13792"/>
           <body name="torso_link" pos="0 0 0.019">
+            <site name="secondary_imu" size="0.01" pos="-0.03959 -0.00224 0.13792"/>
             <inertial pos="0.00331658 0.000261533 0.179856"
               quat="0.999831 0.000376204 0.0179895 -0.00377704" mass="9.598"
               diaginertia="0.12407 0.111951 0.0325382" />
