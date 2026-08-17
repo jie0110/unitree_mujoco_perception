@@ -5,7 +5,7 @@ import noise
 
 ROBOT = "g1"
 INPUT_SCENE_PATH = "./scene.xml"
-OUTPUT_SCENE_PATH = "../unitree_robots/" + ROBOT + "/scene_29dof_terrain_with_camera.xml"
+OUTPUT_SCENE_PATH = "../unitree_robots/" + ROBOT + "/scene_29dof_terrain.xml"
 
 
 # zyx euler angle to quaternion
