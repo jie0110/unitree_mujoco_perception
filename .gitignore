@@ -4,4 +4,4 @@
 **/log/
 **/install/
 # simulate/mujoco
-simulate
+simulate/
