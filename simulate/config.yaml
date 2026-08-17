@@ -1,6 +1,6 @@
 robot: "g1"  # Robot name, "go2", "b2", "b2w", "h1", "go2w", "g1"
 # robot_scene: "scene_23dof.xml" # Robot scene, /unitree_robots/[robot]/scene.xml
-robot_scene: "scene_29dof_with_camera.xml" # Robot scene, /unitree_robots/[robot]/scene.xml
+robot_scene: "scene_29dof_terrain_with_camera.xml" # Robot scene, /unitree_robots/[robot]/scene.xml
 domain_id: 6  # Domain id
 # interface: "enp3s0" # Interface
 interface: "lo" # Interface

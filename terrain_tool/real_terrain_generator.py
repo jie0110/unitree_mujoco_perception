@@ -95,7 +95,6 @@ class TerrainGenerator:
             0.5 * np.array(size))  # half size of box for mujoco
         quat = euler_to_quat(euler[0], euler[1], euler[2])
         geo.attrib["quat"] = list_to_str(quat)
-        geo.attrib['group'] = '0'
 
     def AddGeometry(self,
                position=[1.0, 0.0, 0.0],
@@ -114,12 +113,12 @@ class TerrainGenerator:
     def AddStairs(self,
                   init_pos=[1.0, 0.0, 0.0],
                   yaw=0.0,
-                  width=0.3,
+                  width=0.2,
                   height=0.15,
-                  length=2.5,
-                  stair_nums=15):
+                  length=1.5,
+                  stair_nums=10):
 
-        local_pos = [0.0, 0.0, -0.5 * height]
+        local_pos = [0.0, 0.0, -0.5 * height + init_pos[2]]
         for i in range(stair_nums):
             local_pos[0] += width
             local_pos[2] += height
@@ -258,78 +257,114 @@ class TerrainGenerator:
         self.scene.write(OUTPUT_SCENE_PATH)
 
 
+def create_multi_stair_with_walls(tg, pos, stair_width, stair_height, stair_nums, stair_length, plane_width, stairwell_length):
+    plane_length = stair_length * 2 + stairwell_length
+    plane_height = 0.1
+
+    stairs_total_length = stair_nums * stair_width
+    stairs_total_height = stair_nums * stair_height
+
+    stair_init_pos = [pos[0] + plane_width / 2 - stair_width / 2, pos[1] + stairwell_length / 2 + stair_length / 2, pos[2]]
+    tg.AddStairs(init_pos=stair_init_pos, yaw=0.0, width=stair_width, height=stair_height, length=stair_length, stair_nums=stair_nums)
+
+    center_plane_pos = [stair_init_pos[0] + stairs_total_length + plane_width / 2 + stair_width / 2, pos[1], stair_init_pos[2] + stairs_total_height - plane_height / 2]
+
+    tg.AddBox(position=center_plane_pos, euler=[0, 0, 0.0], size=[plane_width, plane_length, plane_height])
+
+    second_stair_init_pos = [center_plane_pos[0] - plane_width / 2 + stair_width / 2, pos[1] - (stairwell_length / 2 + stair_length / 2), center_plane_pos[2] + plane_height / 2]
+
+    tg.AddStairs(init_pos=second_stair_init_pos, yaw=np.pi, width=stair_width, height=stair_height, length=stair_length, stair_nums=stair_nums)
+
+    last_plane_pos = [pos[0], pos[1], pos[2] + stairs_total_height * 2 - plane_height / 2]
+    tg.AddBox(position=last_plane_pos, euler=[0, 0, 0.0], size=[plane_width, plane_length, plane_height])
+
+    # wall
+    wall_thickness = 0.05
+    
+    side_wall_length = stairs_total_length + plane_width * 2
+    side_wall_height = stairs_total_height * 3
+    side_wall_x = pos[0] + plane_width / 2 + stairs_total_length / 2
+    side_wall_y_offset = plane_length / 2 + wall_thickness / 2
+    
+    stright_wall_height = stairs_total_height * 3
+    stright_wall_length = plane_length
+
+    left_side_wall_pos = [side_wall_x, pos[1] + side_wall_y_offset, pos[2] + side_wall_height / 2]
+    tg.AddBox(position=left_side_wall_pos, euler=[0, 0, 0.0], size=[side_wall_length, wall_thickness, side_wall_height])
+    right_side_wall_pos = [side_wall_x, pos[1] - side_wall_y_offset, pos[2] + side_wall_height / 2]
+    tg.AddBox(position=right_side_wall_pos, euler=[0, 0, 0.0], size=[side_wall_length, wall_thickness, side_wall_height])
+
+    forward_wall_pos = [center_plane_pos[0] + plane_width / 2 + wall_thickness / 2,  pos[1], pos[2] + stright_wall_height / 2]
+    
+    tg.AddBox(position=forward_wall_pos, euler=[0, 0, 0.0], size=[wall_thickness, stright_wall_length, stright_wall_height])
+    
+    # back_wall_pos = [pos[0] - plane_width / 2 - wall_thickness / 2, pos[1], pos[2] + stairs_total_height * 2 + stairs_total_height / 2]
+    # tg.AddBox(position=back_wall_pos, euler=[0, 0, 0.0], size=[wall_thickness, stright_wall_length, stairs_total_height])
+    
+
+def create_bridge_with_walls(tg, pos, stair_width, stair_height, stair_nums, stair_length, flat_plane_length):
+
+    # Stairs
+    stair_init_pos = pos
+    
+    tg.AddStairs(init_pos=stair_init_pos, yaw=0.0,
+                 width=stair_width, height=stair_height,
+                 length=stair_length, stair_nums=stair_nums)
+    
+    # Calculate position after stairs
+    stairs_total_length = stair_nums * stair_width
+    plane_thickness = 0.1
+    
+    flat_plane_pos = [stair_init_pos[0] + stairs_total_length + stair_width / 2, stair_init_pos[1], stair_height * stair_nums - plane_thickness / 2]
+    
+    # Flat plane (thin box)
+    flat_plane_pos[0] = flat_plane_pos[0] + flat_plane_length / 2
+    tg.AddBox(position=flat_plane_pos,
+              euler=[0, 0, 0.0],
+              size=[flat_plane_length, stair_length, plane_thickness])
+    
+    # Calculate position after flat plane
+    after_stair_pos = [flat_plane_pos[0] + flat_plane_length / 2 + stairs_total_length + stair_width / 2, stair_init_pos[1], 0]
+    
+    yaw_deg = 180
+    yaw_rad = np.deg2rad(yaw_deg)
+    
+    tg.AddStairs(init_pos=after_stair_pos, yaw=yaw_rad,
+                 width=stair_width, height=stair_height,
+                 length=stair_length, stair_nums=stair_nums)
+    
+    # Add walls on both sides covering the entire structure (stairs + flat plane + stairs)
+    wall_thickness = 0.05
+    wall_height = 4
+    total_length = stairs_total_length * 2 + flat_plane_length
+    
+    # Calculate center position of the entire structure
+    center_x = flat_plane_pos[0]
+    center_y = flat_plane_pos[1]
+    center_z = wall_height / 2
+    
+    # Left wall (negative Y side)
+    left_wall_pos = [center_x,
+                     center_y - stair_length / 2 - wall_thickness / 2,
+                     center_z]
+    tg.AddBox(position=left_wall_pos,
+              euler=[0, 0, 0.0],
+              size=[total_length, wall_thickness, wall_height])
+    
+    # Right wall (positive Y side)
+    right_wall_pos = [center_x,
+                      center_y + stair_length / 2 + wall_thickness / 2,
+                      center_z]
+    tg.AddBox(position=right_wall_pos,
+              euler=[0, 0, 0.0],
+              size=[total_length, wall_thickness, wall_height])
+    # ------------------
+    
 if __name__ == "__main__":
     tg = TerrainGenerator()
 
-    # Box obstacle
-    # tg.AddBox(position=[1.0, 0.0, 0.5], euler=[0, 0, 0.0], size=[1, 1, 1])
+    create_bridge_with_walls(tg, pos=[1.0, 2.0, 0.0], stair_width=0.30, stair_height=0.16, stair_nums=13, stair_length=1.5, flat_plane_length=2.0)
 
-    # Geometry obstacle
-    # geo_type supports "plane", "sphere", "capsule", "ellipsoid", "cylinder", "box"
-    # tg.AddGeometry(position=[1.5, 0.0, 0.25], euler=[0, 0, 0.0], size=[1.0,0.5,0.5],geo_type="cylinder")
-
-    # Slope
-    # tg.AddBox(position=[2.0, 2.0, 0.5],
-    #           euler=[0.0, -0.5, 0.0],
-    #           size=[3, 1.5, 0.1])
-
-    # Stairs
-    tg.AddStairs(init_pos=[1.5, 0.0, 0.0], yaw=0.0)
-    tg.AddStairs(init_pos=[10.8, 0.0, 0.0], yaw=3.14)
-
-    # Suspend stairs
-    # tg.AddSuspendStairs(init_pos=[1.0, 6.0, 0.0], yaw=0.0)
-
-    # Rough ground
-    # tg.AddRoughGround(init_pos=[-2.5, 5.0, 0.0],
-    #                   euler=[0, 0, 0.0],
-    #                   nums=[10, 8])
-
-    # Perlin heigh field
-    # tg.AddPerlinHeighField(position=[-1.5, 4.0, 0.0], size=[2.0, 1.5])
-
-    # Heigh field from image
-    # tg.AddHeighFieldFromImage(position=[-1.5, 2.0, 0.0],
-    #                           euler=[0, 0, -1.57],
-    #                           size=[2.0,2.0],
-    #                           input_img="./unitree_robot.jpeg",
-    #                           image_scale=[1.0, 1.0],
-    #                           output_hfield_image="unitree_hfield.png")
-
-    # Combined terrain: stairs -> flat plane -> slope
-    # Stairs
-    # stair_init_pos = [1.0, 8.0, 0.0]
-    # stair_width = 0.2
-    # stair_height = 0.15
-    # stair_nums = 5
-    # stair_length = 1.5
-    # tg.AddStairs(init_pos=stair_init_pos, yaw=0.0,
-    #              width=stair_width, height=stair_height,
-    #              length=stair_length, stair_nums=stair_nums)
-
-    # Calculate position after stairs
-    # stairs_total_length = stair_nums * stair_width
-    # flat_plane_pos = [stair_init_pos[0] + stairs_total_length + 0.5, stair_init_pos[1], stair_height * stair_nums]
-
-    # Flat plane (thin box)
-    # flat_plane_length = 2.0
-    # flat_plane_pos[0] = flat_plane_pos[0] + flat_plane_length / 2
-    # tg.AddBox(position=flat_plane_pos,
-    #           euler=[0, 0, 0.0],
-    #           size=[flat_plane_length, stair_length, 0.05])
-
-    # Calculate position after flat plane
-    # slope_pos = [flat_plane_pos[0] + flat_plane_length / 2 + 0.5, flat_plane_pos[1], (stair_height * stair_nums) / 2]
-
-    # Slope (angled box)
-    # slope_length = 1.25
-    # slope_height = 0.5
-    # slope_angle = 0.5  # radians, negative for downward slope
-    # tg.AddBox(position=[slope_pos[0],
-    #                     slope_pos[1],
-    #                     slope_pos[2]
-    #                     ],
-    #           euler=[0.0, slope_angle, 0.0],
-    #           size=[slope_length, stair_length, 0.1])
+    create_multi_stair_with_walls(tg, pos=[-2.0, 5.0, 0.0], stair_width=0.30, stair_height=0.16, stair_nums=13, stair_length=1.5, plane_width=2.0, stairwell_length=0.2)
 
     tg.Save()

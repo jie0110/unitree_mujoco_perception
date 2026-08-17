@@ -3,4 +3,5 @@
 **/__pycache__/
 **/log/
 **/install/
-simulate/mujoco
+# simulate/mujoco
+simulate

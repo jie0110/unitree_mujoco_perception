@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
         runing_time += dt
 
-        if (runing_time < 3.0):
+        if (runing_time < 1000.0):
             # Stand up in first 3 second
             
             # Total time for standing up or standing down is about 1.2s

@@ -2,22 +2,23 @@
   <compiler angle="radian" meshdir="meshes" />
 
   <default>
+    <geom group="1"/>
     <default class="torso_motor">
-      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
+      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
     </default>
     <default class="leg_motor">
-      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
+      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
     </default>
     <default class="ankle_motor">
-      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
+      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
     </default>
     <default class="arm_motor">
-      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
+      <joint damping="0.05" armature="0.01" frictionloss="0.2"/>
     </default>
     <default class="wrist_motor">
-      <joint damping="0.0" armature="0.01" frictionloss="1.0"/>
+      <joint damping="0.05" armature="0.01" frictionloss="0.1"/>
     </default>
-
+    
   </default>
 
   <asset>
@@ -121,6 +122,10 @@
                     range="-0.2618 0.2618" actuatorfrcrange="-50 50" class="ankle_motor"/>
                   <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
                     rgba="0.2 0.2 0.2 1" mesh="left_ankle_roll_link" />
+                  <!-- <geom size="0.005" pos="-0.05 0.025 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="-0.05 -0.025 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="0.12 0.03 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="0.12 -0.03 -0.03" rgba="0.2 0.2 0.2 1" /> -->
                   <geom type="cylinder" size="0.01 0.025"   pos="0.075 -0.026 -0.048" quat="0.7071068 0 0.7071068 0"/>
                   <geom type="cylinder" size="0.008 0.0835" pos="0.0395 -0.018 -0.048" quat="0.7071068 0 -0.7071068 0"/>
                   <geom type="cylinder" size="0.01 0.091"  pos="0.039 -0.01 -0.048" quat="0.7071068 0 -0.7071068 0"/>
@@ -184,6 +189,10 @@
                     range="-0.2618 0.2618" actuatorfrcrange="-50 50" class="ankle_motor" />
                   <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
                     rgba="0.2 0.2 0.2 1" mesh="right_ankle_roll_link" />
+                  <!-- <geom size="0.005" pos="-0.05 0.025 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="-0.05 -0.025 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="0.12 0.03 -0.03" rgba="0.2 0.2 0.2 1" />
+                  <geom size="0.005" pos="0.12 -0.03 -0.03" rgba="0.2 0.2 0.2 1" /> -->
                   <geom type="cylinder" size="0.01 0.025"   pos="0.075 -0.026 -0.048" quat="0.7071068 0 0.7071068 0"/>
                   <geom type="cylinder" size="0.008 0.0835" pos="0.0395 -0.018 -0.048" quat="0.7071068 0 -0.7071068 0"/>
                   <geom type="cylinder" size="0.01 0.091"  pos="0.039 -0.01 -0.048" quat="0.7071068 0 -0.7071068 0"/>
@@ -232,12 +241,75 @@
               group="1" density="0" rgba="0.7 0.7 0.7 1" mesh="waist_support_link" />
             <geom pos="0.0039635 0 -0.054" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
               mesh="waist_support_link" />
-            <!-- depth
-                 # depth:87° × 58°  RGB:69° × 42°
-                 fovy="58"
-                 64 36
-            -->
-            <camera name="depth_cam" pos="0.0576235 0.01753 0.42987" euler="0 -0.707767239493009 -1.57079" sensorsize="0.019830 0.011152" focalpixel="32.2748 32.2799" principalpixel="32.0000 18.0000" resolution="64 36" mode="fixed" />
+
+             <!-- <camera 
+              name="depth_cam" 
+              pos="0.0576235 0.01753 0.42987" 
+              euler="0 -0.707767239493009 -1.57079" 
+              sensorsize="0.019830 0.011152" 
+              focalpixel="32.2748 32.2799" principalpixel="32.0000 18.0000" 
+              resolution="64 36" 
+              mode="fixed" 
+              /> -->
+            
+             <!-- <camera 
+              name="depth_cam" 
+              pos="0.04764571478 0 0.40868178553" 
+              euler="0 -0.7330382858376184 -1.57" 
+              mode="fixed" 
+              fovy="58.29"
+              resolution="64 36" 
+             /> -->
+
+            <!-- <camera 
+              name="depth_cam" 
+              pos="0.0576235 0.01753 0.42987" 
+              euler="0 -0.707767239493009 -1.57079" 
+              sensorsize="0.019830 0.011152" 
+              focalpixel="32.2748 32.2799" 
+              principalpixel="32.0000 18.0000" 
+              resolution="64 36" 
+              mode="fixed" 
+            /> -->
+
+            <!-- <camera 
+              name="depth_cam" 
+              pos="0.0576235 0.01753 0.42987" 
+              euler="0 -0.707767239493009 -1.57079" 
+              fovy="58.29" 
+              resolution="64 36" 
+            /> -->
+
+            <camera 
+              name="depth_cam" 
+              pos="0.0488 0.01 0.4378" 
+              xyaxes="0 -1 0 0.7430 0 0.6692 "
+              resolution="64 36" 
+              fovy="58.29" 
+            />
+           
+            <!-- <camera 
+              name="depth_cam" 
+              mode="fixed" 
+              resolution="64 36" 
+              sensorsize="0.01982968 0.01115244" 
+              focalpixel="32.274 32.281" 
+              principalpixel="32 18"
+              pos="0.0487988662332928 0.01 0.4378029937970051" 
+              xyaxes="0 -1 0 0.7430 0 0.6692"
+            /> -->
+
+
+            <!-- <camera 
+              name="depth_cam" 
+              xyaxes="0 -1 0 0.7430 0 0.6692 " 
+              pos="0.0488 0.01 0.4378" 
+              sensorsize="0.019830 0.011152" 
+              focal="0.01 0.01" 
+              principalpixel="32 18" 
+              resolution="64 36" 
+            /> -->
+
             <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.23778"
               quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
               <inertial pos="0 0.035892 -0.011628" quat="0.654152 0.0130458 -0.326267 0.68225"
