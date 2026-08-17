@@ -4,4 +4,5 @@
 **/log/
 **/install/
 # simulate/mujoco
-simulate/
+/simulate/
+/simulate_python/*.npy

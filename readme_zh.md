@@ -1,5 +1,6 @@
 
 # 介绍
+# 在unitree_mujoco_python中添加深度图和高程图实现
 ## Unitree mujoco
 `unitree_mujoco` 是基于 `Unitree sdk2` 和 `mujoco` 开发的仿真器。用户使用 `Unitree_sdk2`、 `unitree_ros2` 和 `unitree_sdk2_python` 开发的控制程序可以方便地接入该仿真器，实现仿真到实物的开发流程。仓库别基于 c++ 和 python 实现了两个版本的仿真器， 其结构大致如下图所示:
 
